@@ -77,7 +77,7 @@ def capture_img(res="high"):
     if res == "medium":
         W = 1640
         H = 1232
-    elseif res == "low":
+    elif res == "low":
         W = 640
         H = 480
     
