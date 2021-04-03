@@ -2,3 +2,4 @@ secrets.py
 .telegram
 __pycache__
 telegram
+*.swp
