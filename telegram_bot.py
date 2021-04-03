@@ -3,6 +3,9 @@
 
 import subprocess, shlex, logging
 from functools import wraps
+import time
+
+from picamera import PiCamera
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
@@ -68,12 +71,37 @@ def get_ip(update, context):
     global_ip = get_global_ip()
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Global ip: {global_ip}\nLocal ip: {local_ip}")
 
+def capture_img(res="high"):
+    W = 3280
+    H = 2464
+    if res == "medium":
+        W = 1640
+        H = 1232
+    elseif res == "low":
+        W = 640
+        H = 480
+    
+    camera = PiCamera()
+    camera.resolution = (W, H)
+    camera.start_preview()
+    # Camera warm-up time
+    time.sleep(2)
+    name = datetime.now().strftime("%Y%m%d-%H%M%S-%f.jpg")
+    path = "images/" + name
+    camera.capture(path)
+    return path
+    
+@restricted
+def get_img(update, context):
+    path = capture_img()
+    context.bot.send_photo(chat_id=update.effective_chat.id, open(path,'rb'))
 
 def main() -> None:
     # Create the Updater and pass it your bot's token.
     updater = Updater(token=TOKEN, use_context=True)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('ip', get_ip))
+    dispatcher.add_handler(CommandHandler('bilde', get_img))
 
     #dispatcher.add_error_handler(error_handler)
 
