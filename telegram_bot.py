@@ -3,6 +3,7 @@
 
 import subprocess, shlex, logging
 from functools import wraps
+from datetime import datetime
 import time
 
 from picamera import PiCamera
@@ -93,7 +94,9 @@ def capture_img(res="high"):
     
 @restricted
 def get_img(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Tar bilde...")
     path = capture_img()
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sender bilde...")
     context.bot.send_photo(update.effective_chat.id, open(path,"rb"))
 
 def main() -> None:
