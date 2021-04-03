@@ -94,7 +94,7 @@ def capture_img(res="high"):
 @restricted
 def get_img(update, context):
     path = capture_img()
-    context.bot.send_photo(chat_id=update.effective_chat.id, open(path,'rb'))
+    context.bot.send_photo(update.effective_chat.id, open(path,"rb"))
 
 def main() -> None:
     # Create the Updater and pass it your bot's token.
