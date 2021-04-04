@@ -1,7 +1,7 @@
 #!/home/ola/telegram_bot/.telegram/bin/python3
 # -*- coding: utf-8 -*-
 
-import subprocess, shlex, logging
+import subprocess, shlex, logging, os
 from functools import wraps
 from datetime import datetime
 import time
@@ -72,9 +72,13 @@ def get_ip(update, context):
     global_ip = get_global_ip()
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Global ip: {global_ip}\nLocal ip: {local_ip}")
 
-def capture_img(res="high"):
-    W = 3280
-    H = 2464
+def capture_img(res="medium"):
+    """
+    Mulig Pi zero ikke håndterer full oppløsnin(3280x2464)
+    Bedre å teste dette når jeg er på hytta
+    """
+    W = 1640
+    H = 1232
     if res == "medium":
         W = 1640
         H = 1232
@@ -88,8 +92,10 @@ def capture_img(res="high"):
     # Camera warm-up time
     time.sleep(2)
     name = datetime.now().strftime("%Y%m%d-%H%M%S-%f.jpg")
-    path = "images/" + name
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, "images", name)
     camera.capture(path)
+    camera.close()
     return path
     
 @restricted
