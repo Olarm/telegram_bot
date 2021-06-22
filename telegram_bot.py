@@ -5,8 +5,15 @@ import subprocess, shlex, logging
 from functools import wraps
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-from picamera import PiCamera
+
+import subprocess, shlex, logging, os
+from functools import wraps
 from datetime import datetime
+import time
+
+from picamera import PiCamera
+
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
 from secrets import *
 
@@ -91,8 +98,6 @@ def callback_heartbeats(context):
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     state = get_pub_state()
-    print("state: ", state)
-    print("output: ", output.decode("ascii"))
     if (output.decode("ascii").strip() == "1") and (state == "0"):
         context.bot.send_message(job.context, text="MQTT server back online")
         set_pub_state(1)
@@ -106,6 +111,40 @@ def heartbeats(update, context):
                       text="Starting heartbeat monitoring")
     context.job_queue.run_repeating(callback_heartbeats, 60, context=update.effective_chat.id)
 
+
+def capture_img(res="high"):
+    """
+    Mulig Pi zero ikke håndterer full oppløsnin(3280x2464)
+    Bedre å teste dette når jeg er på hytta
+    """
+    W = 3280
+    H = 2464
+    if res == "medium":
+        W = 1640
+        H = 1232
+    elif res == "low":
+        W = 640
+        H = 480
+    
+    camera = PiCamera()
+    camera.resolution = (W, H)
+    camera.start_preview()
+    # Camera warm-up time
+    time.sleep(2)
+    name = datetime.now().strftime("%Y%m%d-%H%M%S-%f.jpg")
+    dirname = os.path.dirname(__file__)
+    path = os.path.join(dirname, "images", name)
+    camera.capture(path)
+    camera.close()
+    return path
+    
+@restricted
+def get_img(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Tar bilde...")
+    path = capture_img()
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sender bilde...")
+    context.bot.send_photo(update.effective_chat.id, open(path,"rb"))
+
 def main() -> None:
     # Create the Updater and pass it your bot's token.
     updater = Updater(token=TOKEN, use_context=True)
@@ -113,6 +152,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler('ip', get_ip))
     dispatcher.add_handler(CommandHandler('heartbeats', heartbeats))
     #dispatcher.add_handler(CommandHandler('stop', stop_heartbeats, pass_job_queue=True))
+    dispatcher.add_handler(CommandHandler('bilde', get_img))
 
     #dispatcher.add_error_handler(error_handler)
 
