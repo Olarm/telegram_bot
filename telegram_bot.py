@@ -72,13 +72,13 @@ def get_ip(update, context):
     global_ip = get_global_ip()
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Global ip: {global_ip}\nLocal ip: {local_ip}")
 
-def capture_img(res="medium"):
+def capture_img(res="high"):
     """
     Mulig Pi zero ikke håndterer full oppløsnin(3280x2464)
     Bedre å teste dette når jeg er på hytta
     """
-    W = 1640
-    H = 1232
+    W = 3280
+    H = 2464
     if res == "medium":
         W = 1640
         H = 1232
