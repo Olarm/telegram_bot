@@ -94,7 +94,7 @@ def set_pub_state(state):
 def callback_heartbeats(context):
     """Send heartbeat, message if error"""
     job = context.job
-    command = "bash heartbeat_pub.sh 192.168.0.5"
+    command = "bash /home/ola/telegram_bot/heartbeat_pub.sh 192.168.0.5"
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     state = get_pub_state()
