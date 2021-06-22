@@ -111,7 +111,6 @@ def main() -> None:
     updater = Updater(token=TOKEN, use_context=True)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('ip', get_ip))
-    dispatcher.add_handler(CommandHandler('bilde', get_photo))
     dispatcher.add_handler(CommandHandler('heartbeats', heartbeats))
     #dispatcher.add_handler(CommandHandler('stop', stop_heartbeats, pass_job_queue=True))
 
