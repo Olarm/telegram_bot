@@ -5,6 +5,8 @@ import subprocess, shlex, logging
 from functools import wraps
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from picamera import PiCamera
+from datetime import datetime
 
 from secrets import *
 
@@ -68,12 +70,50 @@ def get_ip(update, context):
     global_ip = get_global_ip()
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Global ip: {global_ip}\nLocal ip: {local_ip}")
 
+def get_pub_state():
+    f = open("states/pub_state.txt", "r")
+    state = f.read().strip()
+    f.close()
+    if state in ["0", "1"]:
+        return state
+    else:
+        set_pub_state("1")
+        return "1"
+
+def set_pub_state(state):
+    f = open("states/pub_state.txt", "w")
+    f.write(str(state))
+
+def callback_heartbeats(context):
+    """Send heartbeat, message if error"""
+    job = context.job
+    command = "bash heartbeat_pub.sh 192.168.0.5"
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    state = get_pub_state()
+    print("state: ", state)
+    print("output: ", output.decode("ascii"))
+    if (output.decode("ascii").strip() == "1") and (state == "0"):
+        context.bot.send_message(job.context, text="MQTT server back online")
+        set_pub_state(1)
+    elif (output.decode("ascii").strip() == "0") and (state == "1"):
+        context.bot.send_message(job.context, text="MQTT server offline")
+        set_pub_state(0)
+
+@restricted
+def heartbeats(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                      text="Starting heartbeat monitoring")
+    context.job_queue.run_repeating(callback_heartbeats, 60, context=update.effective_chat.id)
 
 def main() -> None:
     # Create the Updater and pass it your bot's token.
     updater = Updater(token=TOKEN, use_context=True)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('ip', get_ip))
+    dispatcher.add_handler(CommandHandler('bilde', get_photo))
+    dispatcher.add_handler(CommandHandler('heartbeats', heartbeats))
+    #dispatcher.add_handler(CommandHandler('stop', stop_heartbeats, pass_job_queue=True))
 
     #dispatcher.add_error_handler(error_handler)
 
