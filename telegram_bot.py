@@ -97,6 +97,7 @@ def callback_heartbeats(context):
     command = "bash /home/ola/telegram_bot/heartbeat_pub.sh 192.168.0.5"
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
+    print("output: ", output)
     state = get_pub_state()
     if (output.decode("ascii").strip() == "1") and (state == "0"):
         context.bot.send_message(job.context, text="MQTT server back online")
@@ -107,6 +108,7 @@ def callback_heartbeats(context):
 
 @restricted
 def heartbeats(update, context):
+    print("heartbeats")
     context.bot.send_message(chat_id=update.effective_chat.id,
                       text="Starting heartbeat monitoring")
     context.job_queue.run_repeating(callback_heartbeats, 60, context=update.effective_chat.id)

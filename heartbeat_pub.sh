@@ -4,8 +4,6 @@ timestamp() {
   date +"%T" # current time
 }
 
-[ "$#" -eq 1 ] || die "broker ip required, $# provided"
-
 broker=$1
 
 if mosquitto_pub -h $broker -t heartbeat/$HOSTNAME -m 1 2> /dev/null ; then
