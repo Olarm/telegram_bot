@@ -1,7 +1,7 @@
 #!/home/ola/telegram_bot/.telegram/bin/python3
 # -*- coding: utf-8 -*-
 
-import subprocess, shlex, logging, os, time, json, asyncio
+import subprocess, shlex, logging, os, time, json, asyncio, binascii
 from functools import wraps
 from datetime import datetime
 
@@ -73,6 +73,9 @@ def echo(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(update.message.text)
 
 def on_message(client, userdata, msg):
+    msg.payload = msg.payload.decode("UTF-8")
+    if msg.payload == "0":
+        return
     bot = userdata.get("bot")
     topics = userdata.get("mqtt_topics")
     topic_actions = topics.get(msg.topic, None)
