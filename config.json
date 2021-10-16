@@ -7,6 +7,7 @@
     "mqtt_topics":
     {
         "verona/inngang_ute": {
+            "trigger": "1",
             "telegram_actions": 
                 [
                     "send_image", 
@@ -14,6 +15,7 @@
                 ]
         }, 
         "verona/inngang_inne": {
+            "trigger": "1",
             "telegram_actions": 
                 [
                     "send_message"
