@@ -1,21 +1,30 @@
 #!/home/ola/telegram_bot/.telegram/bin/python3
 # -*- coding: utf-8 -*-
 
-import subprocess, shlex, logging
-from functools import wraps
-
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-
-import subprocess, shlex, logging, os
+import subprocess, shlex, logging, os, time, json, asyncio
 from functools import wraps
 from datetime import datetime
-import time
 
-from picamera import PiCamera
-
+from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
 from secrets import *
+
+with open("config.json", "r") as config:
+    CONFIG = json.load(config)
+
+PI = CONFIG.get("pi")
+CAMERA = CONFIG.get("camera")
+GPIO = CONFIG.get("gpio")
+MQTT = CONFIG.get("mqtt")
+
+if CAMERA:
+    from picamera import PiCamera
+
+if MQTT:
+    import paho.mqtt.client as mqtt
+    MQTT_HOST = CONFIG.get("mqtt_host")
+    MQTT_PORT = CONFIG.get("mqtt_port", 1883)
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                      level=logging.INFO, )
@@ -57,6 +66,34 @@ def restricted(func):
             return
         return func(update, context, *args, **kwargs)
     return wrapped
+
+@restricted
+def echo(update: Update, context: CallbackContext) -> None:
+    """Echo the user message."""
+    update.message.reply_text(update.message.text)
+
+def on_message(client, userdata, msg):
+    bot = userdata.get("bot")
+    topics = userdata.get("mqtt_topics")
+    topic_actions = topics.get(msg.topic, None)
+    if not topic_actions:
+        print(f"no topic actions for {msg.topic}")
+    else:
+        telegram_actions = topic_actions.get("telegram_actions", None)
+        if telegram_actions:
+            for action in telegram_actions:
+                globals()[action](bot, msg)
+
+def send_image(bot, msg):
+    if CAMERA:
+        path = capture_img()
+        bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=f"Sender bilde...")
+        bot.send_photo(DEVELOPER_CHAT_ID, open(path,"rb"))
+    else:
+        bot.send_message(chat_id=DEVELOPER_CHAT_ID, text="Could not capture image, camera not configured.")
+
+def send_message(bot, msg):
+    bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=f"{msg.topic} {msg.payload}")
 
 def get_local_ip():
     text = subprocess.check_output(['ifconfig', 'wlan0']).decode("ASCII").split(" ")
@@ -127,7 +164,7 @@ def capture_img(res="high"):
     elif res == "low":
         W = 640
         H = 480
-    
+
     camera = PiCamera()
     camera.resolution = (W, H)
     camera.start_preview()
@@ -139,7 +176,7 @@ def capture_img(res="high"):
     camera.capture(path)
     camera.close()
     return path
-    
+
 @restricted
 def get_img(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Tar bilde...")
@@ -151,16 +188,32 @@ def main() -> None:
     # Create the Updater and pass it your bot's token.
     updater = Updater(token=TOKEN, use_context=True)
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(CommandHandler('ip', get_ip))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+    
+    if PI:
+        dispatcher.add_handler(CommandHandler('ip', get_ip))
     dispatcher.add_handler(CommandHandler('heartbeats', heartbeats))
     #dispatcher.add_handler(CommandHandler('stop', stop_heartbeats, pass_job_queue=True))
-    dispatcher.add_handler(CommandHandler('bilde', get_img))
+
+    if CAMERA:
+        dispatcher.add_handler(CommandHandler('bilde', get_img))
 
     #dispatcher.add_error_handler(error_handler)
 
     # Start the Bot
     updater.start_polling()
 
+    if MQTT:
+        # Start MQTT
+        userdata = {"bot": updater.bot, "mqtt_topics": CONFIG.get("mqtt_topics")}
+        client = mqtt.Client("Python", userdata=userdata)
+        #client.on_connect = on_connect
+        client.on_message = on_message
+        client.connect(MQTT_HOST, MQTT_PORT, 60)
+        client.loop_start()
+        for topic in CONFIG.get("mqtt_topics").keys():
+            client.subscribe(topic)
+    
     # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT
     updater.idle()
