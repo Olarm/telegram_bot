@@ -74,20 +74,21 @@ def echo(update: Update, context: CallbackContext) -> None:
 
 def on_message(client, userdata, msg):
     msg.payload = msg.payload.decode("UTF-8")
-    if msg.payload == "0":
-        return
     bot = userdata.get("bot")
     topics = userdata.get("mqtt_topics")
     topic_actions = topics.get(msg.topic, None)
     if not topic_actions:
         print(f"no topic actions for {msg.topic}")
+        return
+    if msg.payload != topic_actions.get("trigger", None):
+        return
     else:
         telegram_actions = topic_actions.get("telegram_actions", None)
         if telegram_actions:
             for action in telegram_actions:
-                globals()[action](bot, msg)
+                globals()[action](bot, msg, topic_actions)
 
-def send_image(bot, msg):
+def send_image(bot, msg, *args):
     if CAMERA:
         path = capture_img()
         bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=f"Sender bilde...")
@@ -95,8 +96,9 @@ def send_image(bot, msg):
     else:
         bot.send_message(chat_id=DEVELOPER_CHAT_ID, text="Could not capture image, camera not configured.")
 
-def send_message(bot, msg):
-    bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=f"{msg.topic} {msg.payload}")
+def send_message(bot, msg, topic_actions):
+    message = topic_actions.get("message", msg.payload)
+    bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=f"{msg.topic}: {message}")
 
 def get_local_ip():
     text = subprocess.check_output(['ifconfig', 'wlan0']).decode("ASCII").split(" ")
