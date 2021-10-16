@@ -1,0 +1,23 @@
+{
+    "pi": false,
+    "camera": false,
+    "gpio": false,
+    "mqtt": true,
+    "mqtt_host": "192.168.39.150",
+    "mqtt_topics":
+    {
+        "verona/inngang_ute": {
+            "telegram_actions": 
+                [
+                    "send_image", 
+                    "send_message"
+                ]
+        }, 
+        "verona/inngang_inne": {
+            "telegram_actions": 
+                [
+                    "send_message"
+                ]
+        }
+    }
+}
