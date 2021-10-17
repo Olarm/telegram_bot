@@ -257,6 +257,7 @@ def capture_video(length=10, fps=25, res="medium"):
         mp4_path = os.path.join(dirname, "videos", name+".mp4")
         cmd = f'MP4Box -add {path} {mp4_path} >> /dev/null 2>&1'
         os.system(cmd)
+        os.system(f'rm {path}')
         return mp4_path
     return False
         
