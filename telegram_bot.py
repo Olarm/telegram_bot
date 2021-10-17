@@ -87,8 +87,8 @@ def on_message(client, userdata, msg):
     else:
         telegram_actions = topic_actions.get("telegram_actions", None)
         if telegram_actions:
-            for action in telegram_actions:
-                globals()[action](bot, msg, topic_actions)
+            for action, kwargs in telegram_actions.items():
+                globals()[action](bot, msg, topic_actions, **kwargs)
 
 def condition_handler(topic_actions):
     """
@@ -113,7 +113,7 @@ def condition_handler(topic_actions):
         return True
         
 
-def send_image(bot, msg, topic_actions):
+def send_image(bot, msg, topic_actions, **kwargs):
     receivers = topic_actions.get("telegram_receivers")
     if CAMERA:
         path = capture_img()
@@ -124,7 +124,7 @@ def send_image(bot, msg, topic_actions):
     else:
         bot.send_message(chat_id=DEVELOPER_CHAT_ID, text="Could not capture image, camera not configured.")
 
-def send_message(bot, msg, topic_actions):
+def send_message(bot, msg, topic_actions, **kwargs):
     receivers = topic_actions.get("telegram_receivers")
     message = topic_actions.get("message", msg.payload)
     for receiver in receivers:
