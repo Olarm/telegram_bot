@@ -112,6 +112,21 @@ def condition_handler(topic_actions):
             return False
         return True
         
+def send_video(bot, msg, topic_actions, **kwargs):
+    receivers = topic_actions.get("telegram_receivers")
+    if CAMERA:
+        length = kwargs.get("length", 10)
+        path = capture_video(length)
+        for receiver in receivers:
+            chat_id = globals()[receiver]
+            if path:
+                bot.send_message(chat_id, text=f"Sender video, lengde: {length} sekunder...")
+                bot.send_video(chat_id, open(path,"rb"))
+            else:
+                bot.send_message(chat_id, text=f"Forsøkte å ta opp video, opptak feilet.")
+    else:
+        bot.send_message(chat_id=DEVELOPER_CHAT_ID, text="Could not capture video, camera not configured.")
+
 
 def send_image(bot, msg, topic_actions, **kwargs):
     receivers = topic_actions.get("telegram_receivers")
@@ -213,6 +228,30 @@ def capture_img(res="high"):
     camera.close()
     return path
 
+def capture_video(length=10, res="medium"):
+    """
+    Mulig Pi zero ikke håndterer full oppløsnin(3280x2464)
+    Bedre å teste dette når jeg er på hytta
+    """
+    W = 3280
+    H = 2464
+    if res == "medium":
+        W = 1640
+        H = 1232
+    elif res == "low":
+        W = 640
+        H = 480
+    with PiCamera() as camera:
+        name = datetime.now().strftime("%Y%m%d-%H%M%S-%f.jpg")
+        dirname = os.path.dirname(__file__)
+        path = os.path.join(dirname, "images", name)
+        camera.resolution = (W, H)
+        camera.start_recording(path)
+        camera.wait_recording(length)
+        camera.stop_recording()
+        return path
+    return False
+        
 @restricted
 def get_img(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Tar bilde...")
