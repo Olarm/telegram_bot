@@ -88,17 +88,23 @@ def on_message(client, userdata, msg):
             for action in telegram_actions:
                 globals()[action](bot, msg, topic_actions)
 
-def send_image(bot, msg, *args):
+def send_image(bot, msg, topic_actions):
+    receivers = topic_actions.get("telegram_receivers")
     if CAMERA:
         path = capture_img()
-        bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=f"Sender bilde...")
-        bot.send_photo(DEVELOPER_CHAT_ID, open(path,"rb"))
+        for receiver in receivers:
+            chat_id = globals()[receiver]
+            bot.send_message(chat_id, text=f"Sender bilde...")
+            bot.send_photo(chat_id, open(path,"rb"))
     else:
         bot.send_message(chat_id=DEVELOPER_CHAT_ID, text="Could not capture image, camera not configured.")
 
 def send_message(bot, msg, topic_actions):
+    receivers = topic_actions.get("telegram_receivers")
     message = topic_actions.get("message", msg.payload)
-    bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=f"{msg.topic}: {message}")
+    for receiver in receivers:
+        chat_id = globals()[receiver]
+        bot.send_message(chat_id=chat_id, text=f"{msg.topic}: {message}")
 
 def get_local_ip():
     text = subprocess.check_output(['ifconfig', 'wlan0']).decode("ASCII").split(" ")
