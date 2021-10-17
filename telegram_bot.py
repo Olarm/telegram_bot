@@ -246,16 +246,16 @@ def capture_video(length=10, fps=25, res="medium"):
     elif res == "high":
         fps = 10
     with PiCamera() as camera:
-        name = datetime.now().strftime("%Y%m%d-%H%M%S-%f.h264")
+        name = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
         dirname = os.path.dirname(__file__)
-        path = os.path.join(dirname, "videos", name)
+        path = os.path.join(dirname, "videos", name+".h264")
         camera.resolution = (W, H)
-        camera.framerate = fps
+        #camera.framerate = fps
         camera.start_recording(path)
         camera.wait_recording(length)
         camera.stop_recording()
-        mp4_path = path.parent.joinpath(path.stem + '.mp4')
-        cmd = f'MP4Box -add {path} -fps {fps} {mp4_path} >> /dev/null 2>&1'
+        mp4_path = os.path.join(dirname, "videos", name+".mp4")
+        cmd = f'MP4Box -add {path} {mp4_path} >> /dev/null 2>&1'
         os.system(cmd)
         return mp4_path
     return False
