@@ -1,7 +1,7 @@
 #!/home/ola/telegram_bot/.telegram/bin/python3
 # -*- coding: utf-8 -*-
 
-import subprocess, shlex, logging, os, time, json, asyncio, binascii
+import subprocess, shlex, logging, os, time, json, requests
 from functools import wraps
 from datetime import datetime
 
@@ -82,11 +82,36 @@ def on_message(client, userdata, msg):
         return
     if msg.payload != topic_actions.get("trigger", None):
         return
+    elif not condition_handler(topic_actions):
+        return
     else:
         telegram_actions = topic_actions.get("telegram_actions", None)
         if telegram_actions:
             for action in telegram_actions:
                 globals()[action](bot, msg, topic_actions)
+
+def condition_handler(topic_actions):
+    """
+    Check if all conditions are True.
+    If HASS API cannot be reached, condition will default to True
+    """
+    conditions = topic_actions.get("hass_state_conditions", None)
+    if not conditions:
+        return True
+    headers = {
+        'Authorization': f'Bearer {HASS_TOKEN}',
+        'content_type': 'application/json'
+    }
+    for condition, state in conditions.items():
+        url = HASS_API_URL+"states/"+condition
+        r = requests.get(url, headers=headers)
+        print(r)
+        if r.status_code != "200":
+            print(f"Bad response from HASS: {r.status_code}, setting condition to true.")
+        elif state != r.json().get("state"):
+            return False
+        return True
+        
 
 def send_image(bot, msg, topic_actions):
     receivers = topic_actions.get("telegram_receivers")
