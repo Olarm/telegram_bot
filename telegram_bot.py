@@ -10,7 +10,9 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 
 from secrets import *
 
-with open("config.json", "r") as config:
+dirname = os.path.dirname(__file__)
+config_path = os.path.join(dirname, "config.json")
+with open(config_path, "r") as config:
     CONFIG = json.load(config)
 
 PI = CONFIG.get("pi")
