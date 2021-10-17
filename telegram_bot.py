@@ -107,8 +107,7 @@ def condition_handler(topic_actions):
     for condition, state in conditions.items():
         url = HASS_API_URL+"states/"+condition
         r = requests.get(url, headers=headers)
-        print(r)
-        if r.status_code != "200":
+        if not r.ok:
             print(f"Bad response from HASS: {r.status_code}, setting condition to true.")
         elif state != r.json().get("state"):
             return False
