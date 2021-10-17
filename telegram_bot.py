@@ -259,6 +259,17 @@ def get_img(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sender bilde...")
     context.bot.send_photo(update.effective_chat.id, open(path,"rb"))
 
+@restricted
+def get_vid(update, context):
+    length = int(context.args[0])
+    if length < 1 or length > 1000:
+        update.message.reply("Video lengde må være mellom 1 og 1000 sekunder")
+        return
+    update.message.reply("Tar video opptak...")
+    path = capture_video(length)
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sender video...")
+    context.bot.send_video(update.effective_chat.id, open(path,"rb"))
+
 def main() -> None:
     # Create the Updater and pass it your bot's token.
     updater = Updater(token=TOKEN, use_context=True)
@@ -272,6 +283,7 @@ def main() -> None:
 
     if CAMERA:
         dispatcher.add_handler(CommandHandler('bilde', get_img))
+        dispatcher.add_handler(CommandHandler('video', get_vid))
 
     #dispatcher.add_error_handler(error_handler)
 
