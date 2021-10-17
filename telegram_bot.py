@@ -242,9 +242,9 @@ def capture_video(length=10, res="medium"):
         W = 640
         H = 480
     with PiCamera() as camera:
-        name = datetime.now().strftime("%Y%m%d-%H%M%S-%f.jpg")
+        name = datetime.now().strftime("%Y%m%d-%H%M%S-%f.h264")
         dirname = os.path.dirname(__file__)
-        path = os.path.join(dirname, "images", name)
+        path = os.path.join(dirname, "videos", name)
         camera.resolution = (W, H)
         camera.start_recording(path)
         camera.wait_recording(length)
