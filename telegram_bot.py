@@ -263,9 +263,9 @@ def get_img(update, context):
 def get_vid(update, context):
     length = int(context.args[0])
     if length < 1 or length > 1000:
-        update.message.reply("Video lengde må være mellom 1 og 1000 sekunder")
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Video lengde må være mellom 1 og 1000 sekunder")
         return
-    update.message.reply("Tar video opptak...")
+    context.bot.send_message(chat_id=update.effective_chat.id, text=f"Tar video...")
     path = capture_video(length)
     context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sender video...")
     context.bot.send_video(update.effective_chat.id, open(path,"rb"))
