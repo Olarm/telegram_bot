@@ -254,7 +254,7 @@ def capture_video(length=10, fps=25, res="medium"):
         camera.start_recording(path)
         camera.wait_recording(length)
         camera.stop_recording()
-        mp4_path = h264_path.parent.joinpath(path.stem + '.mp4')
+        mp4_path = path.parent.joinpath(path.stem + '.mp4')
         cmd = f'MP4Box -add {path} -fps {fps} {mp4_path} >> /dev/null 2>&1'
         os.system(cmd)
         return mp4_path
