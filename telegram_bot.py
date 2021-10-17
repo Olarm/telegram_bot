@@ -230,7 +230,7 @@ def capture_img(res="high"):
     camera.close()
     return path
 
-def capture_video(length=10, res="medium"):
+def capture_video(length=10, fps=25, res="medium"):
     """
     Mulig Pi zero ikke håndterer full oppløsnin(3280x2464)
     Bedre å teste dette når jeg er på hytta
@@ -243,15 +243,21 @@ def capture_video(length=10, res="medium"):
     elif res == "low":
         W = 640
         H = 480
+    elif res == "high":
+        fps = 10
     with PiCamera() as camera:
         name = datetime.now().strftime("%Y%m%d-%H%M%S-%f.h264")
         dirname = os.path.dirname(__file__)
         path = os.path.join(dirname, "videos", name)
         camera.resolution = (W, H)
+        camera.framerate = fps
         camera.start_recording(path)
         camera.wait_recording(length)
         camera.stop_recording()
-        return path
+        mp4_path = h264_path.parent.joinpath(path.stem + '.mp4')
+        cmd = f'MP4Box -add {path} -fps {fps} {mp4_path} >> /dev/null 2>&1'
+        os.system(cmd)
+        return mp4_path
     return False
         
 @restricted
